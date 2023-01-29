@@ -13,7 +13,9 @@ import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.web.filter.CorsFilter;
 
 import com.cos.jwt.config.jwt.JwtAuthenticationFilter;
+import com.cos.jwt.config.jwt.JwtAuthorizationFilter;
 import com.cos.jwt.filter.MyFilter3;
+import com.cos.jwt.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig  {
 	
 	private final CorsFilter corsFilter;
+	private final UserRepository userRepository;
 	
 	@Bean
     BCryptPasswordEncoder passwordEncoder() {
@@ -32,7 +35,7 @@ public class SecurityConfig  {
 	@Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-        	.addFilterBefore(new MyFilter3(), SecurityContextHolderFilter.class) // 클래스에 걸린 필터이전에 실행
+//        	.addFilterBefore(new MyFilter3(), SecurityContextHolderFilter.class) // 클래스에 걸린 필터이전에 실행
 	        .csrf().disable()
 	        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 세션을 사용하지 않겠다.(stateless)
 	        .and()
@@ -42,12 +45,12 @@ public class SecurityConfig  {
 	    	.apply(new MyCustomDsl())
 //	    	.addFilter(new JwtAuthenticationFilter()) // AuthenticationManager
 	    	.and()
-	    	.authorizeRequests()
-	        	.antMatchers("/api/v1/user/**").hasAnyRole("ROLE_USER", "ROLE_MANAGER", "ROLE_ADMIN")
-	        	.antMatchers("/api/v1/manager/**").hasAnyRole("ROLE_MANAGER", "ROLE_ADMIN")
-	        	.antMatchers("/api/v1/admin/**").hasAnyRole("ROLE_ADMIN")
-	        	.anyRequest().permitAll();
-            
+	    	.authorizeRequests(authroize -> authroize
+	    			.antMatchers("/api/v1/user/**").access("hasRole('ROLE_USER') or hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
+					.antMatchers("/api/v1/manager/**").access("hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
+					.antMatchers("/api/v1/admin/**").access("hasRole('ROLE_ADMIN')")
+					.anyRequest().permitAll());
+        
         return http.build();
     }
 	
@@ -59,7 +62,7 @@ public class SecurityConfig  {
 			http
 					.addFilter(corsFilter)
 					.addFilter(new JwtAuthenticationFilter(authenticationManager))
-//					.addFilter(new JwtAuthorizationFilter(authenticationManager, userRepository))
+					.addFilter(new JwtAuthorizationFilter(authenticationManager, userRepository))
 					;
 		}
 	}
