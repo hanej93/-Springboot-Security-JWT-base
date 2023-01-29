@@ -1,6 +1,8 @@
 package com.cos.jwt.config.jwt;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.util.Date;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -13,6 +15,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.cos.jwt.config.auth.PrincipalDetails;
 import com.cos.jwt.model.Users;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -79,8 +83,16 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 			Authentication authResult) throws IOException, ServletException {
 		
 		System.out.println("successfulAuthentication 실행됨, 로그인이 되었음");
+		PrincipalDetails principalDetails = (PrincipalDetails) authResult.getPrincipal();
 		
+		// RSA 방식은 아니고 Hash 암호 방식
+		String jwtToken = JWT.create()
+			.withSubject("cos토큰")
+			.withExpiresAt(new Date(System.currentTimeMillis() + JwtProperties.EXPIRATION_TIME))
+			.withClaim("id", principalDetails.getUser().getId())
+			.withClaim("username", principalDetails.getUser().getUsername())
+			.sign(Algorithm.HMAC512(JwtProperties.SECRET));
 		
-		super.successfulAuthentication(request, response, chain, authResult);
+		response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
 	}
 }
