@@ -1,0 +1,43 @@
+package com.cos.jwt.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
+import org.springframework.web.filter.CorsFilter;
+
+import com.cos.jwt.filter.MyFilter3;
+
+import lombok.RequiredArgsConstructor;
+
+@Configuration
+@EnableWebSecurity
+@RequiredArgsConstructor
+public class SecurityConfig  {
+	
+	private final CorsFilter corsFilter;
+	
+	@Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+        	.addFilterBefore(new MyFilter3(), SecurityContextHolderFilter.class) // 클래스에 걸린 필터이전에 실행
+	        .csrf().disable()
+	        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 세션을 사용하지 않겠다.(stateless)
+	        .and()
+	        .addFilter(corsFilter) // @CrossOrgin(인증 x), 시큐리티 필터에 등록 인증(o)
+	    	.formLogin().disable() // formLogin을 안쓰겠다.
+	    	.httpBasic().disable() // 요청시 헤더에 Authorization(id,pw)를 담아서 보냄 -> 사용 안하겠다. // id,pw 대신 토큰 사용 -> Bearer 방식
+	    	.authorizeRequests()
+	        	.antMatchers("/api/v1/user/**").hasAnyRole("ROLE_USER", "ROLE_MANAGER", "ROLE_ADMIN")
+	        	.antMatchers("/api/v1/manager/**").hasAnyRole("ROLE_MANAGER", "ROLE_ADMIN")
+	        	.antMatchers("/api/v1/admin/**").hasAnyRole("ROLE_ADMIN")
+	        	.anyRequest().permitAll();
+            
+        return http.build();
+    }
+	
+
+}
