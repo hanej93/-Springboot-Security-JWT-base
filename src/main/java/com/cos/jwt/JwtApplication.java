@@ -7,11 +7,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @SpringBootApplication
 public class JwtApplication {
-	
-	@Bean
-    BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
 	public static void main(String[] args) {
 		SpringApplication.run(JwtApplication.class, args);

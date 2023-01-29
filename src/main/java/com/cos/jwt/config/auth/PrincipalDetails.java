@@ -8,6 +8,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.cos.jwt.model.Users;
 
+import lombok.Data;
+
+@Data
 public class PrincipalDetails implements UserDetails {
 
 	private Users user;
